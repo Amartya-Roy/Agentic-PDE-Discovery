@@ -182,7 +182,7 @@ If you use this code, please cite:
 ```
 @software{pde_discovery_agentic,
   title = {Agentic AI for PDE Discovery},
-  author = {Your Name},
+  author = {Sarang Pekhale, Amartya Roy },
   year = {2024},
   description = {Multi-agent system for discovering PDEs using VLMs and symbolic regression}
 }
