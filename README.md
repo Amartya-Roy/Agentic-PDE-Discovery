@@ -1,246 +1,203 @@
-🔴 [CAUTION] - WORK IN PROGRESS 
+# 🎯 Agentic AI for PDE Discovery
 
-
-# Agentic AI System for PDE Discovery
-
-## 🎯 Overview
-This system uses a multi-agent AI framework (AutoGen) to automatically discover governing partial differential equations (PDEs) from spatiotemporal data. It combines Vision-Language Models (VLMs), Large Language Models (LLMs), and symbolic regression (PySINDy) in an iterative, reinforcement learning-like loop.
+An autonomous multi-agent system that discovers governing partial differential equations (PDEs) from spatiotemporal data using vision-language models and symbolic regression.
 
 ---
 
-## 🏗️ System Architecture
+## 🚀 Quick Start
 
-### **Multi-Agent Pipeline Flow**
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    USER INITIATES SYSTEM                         │
-│              (Provides contour/surface plots)                    │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  AGENT 1: Contour_Plot_Analyser (VLM)                           │
-│  ────────────────────────────────────────                        │
-│  • Analyzes visual patterns in plots                             │
-│  • Identifies: shocks, waves, dispersion, nonlinearity          │
-│  • Outputs: Structured text description                          │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  AGENT 2: LLM (PDE Hypothesis Generator) ⭐ CORE ROLE            │
-│  ────────────────────────────────────────                        │
-│  ROLE: Mathematical Physicist & Pattern Interpreter              │
-│                                                                   │
-│  INPUT:                                                           │
-│    - VLM's visual analysis (e.g., "high dispersion, nonlinear    │
-│      advection, chaotic waves")                                  │
-│    - Feedback from Critic (if iteration > 1)                     │
-│                                                                   │
-│  PROCESS:                                                         │
-│    1. Maps visual cues to PDE terms:                             │
-│       • "Dispersion" → u_xxxx, u_xxx                             │
-│       • "Nonlinear advection" → u*u_x                            │
-│       • "Diffusion" → u_xx                                        │
-│    2. Draws from knowledge base of canonical PDEs:               │
-│       • Kuramoto-Sivashinsky: u_t = -u*u_x - u_xx - u_xxxx       │
-│       • Burgers: u_t = -u*u_x + ν*u_xx                           │
-│       • KdV, Fisher-KPP, etc.                                    │
-│    3. Generates 10 diverse candidate PDEs combining:             │
-│       • Known PDE templates                                       │
-│       • Novel term combinations                                   │
-│       • Physically plausible structures                           │
-│                                                                   │
-│  OUTPUT: 10 equations (e.g., u_t = -u*u_x - u_xx - u_xxxx)       │
-│                                                                   │
-│  CONSTRAINTS:                                                     │
-│    - Uses ONLY allowed symbols (u, u_x, u_xx, u_xxx, u_xxxx)    │
-│    - NO code generation (purely symbolic)                         │
-│    - Balances exploration (new terms) & exploitation (proven)    │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  AGENT 3: Engineer (Code Generator)                              │
-│  ────────────────────────────────────────────                    │
-│  • Receives 10 PDEs from LLM                                     │
-│  • Writes Python script using PySINDy:                           │
-│    1. Loads u(x,t), x, t data                                    │
-│    2. Computes derivatives (u_t, u_x, u_xx, u_xxx, u_xxxx)      │
-│    3. For each PDE:                                              │
-│       - Fits coefficients via least-squares                      │
-│       - Calculates Relative L2 Error                             │
-│    4. Saves results to CSV (scores, errors, boundaries)          │
-│  • Output: Executable Python code + fitted PDEs with scores      │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  AGENT 4: Executor (Code Runner)                                 │
-│  ────────────────────────────────────────────                    │
-│  • Runs Engineer's code locally (no Docker)                      │
-│  • Returns: Exit code, output, errors                            │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  AGENT 5: Scientist (Quality Control)                            │
-│  ────────────────────────────────────────────                    │
-│  • Checks execution success (exitcode: 0)                        │
-│  • Validates outputs:                                             │
-│    - Files exist (score.csv, error.csv, etc.)                    │
-│    - Scores are numerical                                         │
-│  • Reviews physical plausibility:                                 │
-│    - Do terms make sense? (e.g., u_xxxx for dispersion)          │
-│    - Are coefficients reasonable?                                 │
-│  • Signals: ROGER CRITIC (pass) or ROGER ENGINEER (fix code)     │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  AGENT 6: Critic (Decision Maker) 🎓 GATEKEEPER                  │
-│  ────────────────────────────────────────────                    │
-│  ROLE: Final arbiter of truth                                    │
-│                                                                   │
-│  EVALUATES:                                                       │
-│    1. All 10 fitted PDEs (not just best score)                   │
-│    2. Mathematical validity (well-posed, consistent)             │
-│    3. Physical plausibility (terms represent real processes)     │
-│    4. Fit quality (L2 error, boundary behavior)                  │
-│                                                                   │
-│  DECISION LOGIC:                                                  │
-│    IF any PDE meets ALL criteria:                                │
-│       • L2 Error ≤ 0.01                                          │
-│       • Mathematically sound                                      │
-│       • Physically meaningful                                     │
-│       • Stable boundaries                                         │
-│    THEN:                                                          │
-│       → Signal TERMINATE (success!)                              │
-│    ELSE:                                                          │
-│       → Analyze failures (e.g., "missing dispersion term")       │
-│       → Generate specific feedback for LLM                        │
-│       → Signal ROGER LLM (iterate)                               │
-│                                                                   │
-│  FEEDBACK EXAMPLES:                                               │
-│    - "High errors suggest missing u_xxxx for dispersion"         │
-│    - "Coefficient on u*u_x too large; reduce nonlinearity"       │
-│    - "Add damping term u_xx to stabilize"                        │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                ┌───────────┴───────────┐
-                │                       │
-                ▼                       ▼
-        ┌───────────────┐      ┌──────────────┐
-        │  TERMINATE    │      │  BACK TO LLM │
-        │  (Success!)   │      │  (Iterate)   │
-        └───────────────┘      └──────┬───────┘
-                                      │
-                                      └─────────────┐
-                                                    │
-                    ┌───────────────────────────────┘
-                    │
-                    ▼
-            ┌───────────────────────────────────────┐
-            │  LLM Receives Critic Feedback          │
-            │  - Incorporates suggestions            │
-            │  - Generates 10 NEW PDEs               │
-            │  - Cycle repeats (max 100 rounds)     │
-            └────────────────────────────────────────┘
-```
-
----
-
-## 🧠 The LLM's Role in Detail
-
-### **Why Do We Need an LLM for PDE Discovery?**
-
-Traditional symbolic regression (e.g., genetic programming, LASSO) explores term combinations blindly. **The LLM brings domain knowledge** to guide the search:
-
-1. **Physical Intuition**: Knows that:
-   - Burgers equation has `u*u_x` (shock formation)
-   - KS equation needs `u_xxxx` (dispersion stabilization)
-   - Diffusion requires `u_xx` (smoothing)
-
-2. **Pattern Recognition**: Maps visual cues → math:
-   - VLM says "chaotic waves" → LLM proposes `-u*u_x - u_xxxx`
-   - VLM says "smooth diffusion" → LLM proposes `ν*u_xx`
-
-3. **Iterative Learning**: Unlike static methods, the LLM:
-   - Receives feedback ("error too high, add u_xxxx")
-   - Adjusts the next generation of PDEs
-   - Converges faster than blind search
-
-### **What the LLM Does NOT Do**
-- Does NOT run simulations
-- Does NOT compute derivatives
-- Does NOT fit coefficients
-- ONLY generates symbolic PDE forms (e.g., `u_t = term1 + term2`)
-
----
-
-## 📊 Scoring System
-
-### Relative L2 Error Metric
 ```python
-error = ||u_t_true - u_t_predicted|| / ||u_t_true||
-```
+# 1. Set your NVIDIA API key in the notebook (Cell 5)
+CONFIG = {
+    "api_key": "your-nvidia-api-key-here",
+    "dataset_name": "KS",  # or "Burgers"
+}
 
-| Error Range | Interpretation | Action |
-|-------------|----------------|--------|
-| < 0.01 | ✅ Excellent | Accept if physically valid |
-| 0.01–0.03 | 🟡 Good | Review carefully |
-| 0.03–0.05 | 🟠 Acceptable | Likely needs refinement |
-| > 0.05 | 🔴 Poor | Reject, iterate |
+# 2. Run all cells in llm4ed_agentic_ai_CLEAN.ipynb
+
+# 3. Find discovered PDE in FINAL_RESULT.txt
+```
 
 ---
 
-## 📁 File Structure
+## 📖 What This Does
 
+**Input**: Spatiotemporal data `u(x,t)` from PDEs (e.g., Kuramoto-Sivashinsky, Burgers equation)
+
+**Output**: Discovered governing equation with fitted coefficients
 ```
-pdefinder/
-├── llm4ed_agentic_ai_new_vlm_v1.ipynb  # Main notebook
-├── Bayesian_PDE_Discovery_DATA/         # Data files
-│   └── kuramoto_sivishinky.mat
-├── surface_contour_plots/               # Visualization inputs
-│   ├── KS_contour_896.png
-│   └── KS_surface_896.png
-├── u.npy, x.npy, t.npy                 # Loaded data arrays
-├── score.csv                            # PDE scores (output)
-├── error.csv                            # Error fields (output)
-└── pde_sim.py                           # Last executed code
+Example: u_t = -1.023*u*u_x - 0.997*u_xx - 1.001*u_xxxx
 ```
 
-
-## 📚 Key References
-
-1. **SINDy**: Brunton et al. (2016) - Sparse Identification of Nonlinear Dynamics
-2. **AutoGen**: Microsoft Research - Multi-agent conversation framework
-
+**Method**: Multi-agent AI system with visual analysis → symbolic hypothesis → numerical fitting → visual validation
 
 ---
 
+## 🤖 How It Works
+
+### Multi-Agent Pipeline
+
+```
+VLM (Vision) → LLM (Symbolic) → Engineer (Code) → Executor (Run) → 
+Scientist (QC) → VLM Validator (Visual) → Critic (Decision)
+```
+
+### Agent Roles
+
+1. **VLM (Contour_Plot_Analyser)**: Analyzes spatiotemporal plots, identifies patterns (shocks, waves, dispersion)
+
+2. **LLM (Hypothesis Generator)**: Maps visual cues to symbolic PDE terms, generates 10 candidate equations
+   - Example: "dispersion" → u_xxxx, "nonlinearity" → u*u_x
+
+3. **Engineer**: Writes Python code to fit each candidate PDE using PySINDy
+   - Creates custom PDE libraries for each hypothesis
+   - Generates 3-subplot comparison plots (ground truth vs predicted vs error)
+
+4. **Executor**: Runs the generated code, saves comparison plots
+
+5. **Scientist**: Quality control - checks if plots were generated successfully
+
+6. **VLM Validator**: Visually analyzes the 10 comparison plots
+   - Rates match quality: EXCELLENT / GOOD / ACCEPTABLE / POOR
+   - Identifies top 3 best matches
+
+7. **Critic**: Final decision maker
+   - If EXCELLENT match found → TERMINATE and save result
+   - If POOR matches → Send feedback to LLM for new hypotheses
+
+---
+
+## 📂 Key Files
+
+### Input
+- `Bayesian_PDE_Discovery_DATA/kuramoto_sivishinky.mat` - KS equation data
+- `Bayesian_PDE_Discovery_DATA/burgers.mat` - Burgers equation data
+- `surface_contour_plots/KS_*.png` - Visualization plots
+
+### Notebook
+- `llm4ed_agentic_ai_CLEAN.ipynb` - Main notebook (run this!)
+
+### Output
+- `FINAL_RESULT.txt` - **Discovered PDE with coefficients** ⭐
+- `pde_comparison_0.png` to `pde_comparison_9.png` - Visual comparison plots
+- `fitted_pdes.txt` - All fitted equations from PySINDy
+- `u.npy`, `x.npy`, `t.npy` - Processed data
+
+---
+
+## ⚙️ Configuration
+
+Edit `CONFIG` dictionary in Cell 5:
+
+```python
+CONFIG = {
+    # Resolution (higher = more accurate but slower)
+    "n_x_sub": 1024,      # Spatial points (256-1024)
+    "n_t_sub": 512,       # Temporal points (128-512)
+    
+    # Search parameters
+    "max_rounds": 30,     # Max iterations (20-50)
+    
+    # Dataset
+    "dataset_name": "KS", # "KS" or "Burgers"
+    
+    # Term restrictions
+    "restrict_terms": True,  # Remove polynomial terms for cleaner search
+    
+    # API
+    "api_key": "nvapi-...",
+    "llm_model": "qwen/qwen3-coder-480b-a35b-instruct",
+    "vlm_model": "microsoft/phi-4-multimodal-instruct",
+}
+```
 
 
-## 📝 Quick Start
+
+## 🔧 How PySINDy Fitting Works
+
+For each candidate PDE from the LLM:
+
+1. **Create Custom Library**: Parse PDE terms (e.g., `u*u_x`, `u_xx`, `u_xxxx`)
+2. **Train-Test Split**: 60% train, 40% test
+3. **Fit Coefficients**: Use `ps.STLSQ` sparse regression
+4. **Predict**: Generate `u_dot_predicted` on test set
+5. **Visualize**: 3-subplot comparison (ground truth | predicted | error)
+
+**Key**: The LLM proposes symbolic structure, PySINDy finds optimal coefficients.
+
+---
+
+## 📊 Visual Validation Process
+
+Instead of just using numerical L2 error, the system uses **visual analysis**:
+
+1. Engineer generates comparison plots for each PDE
+2. VLM Validator examines all 10 plots visually
+3. Looks for:
+   - Pattern similarity between ground truth and predicted
+   - Error map uniformity (small random noise = good)
+   - Physical plausibility
+
+**Why visual?** Catches systematic errors that numerical metrics might miss.
+
+---
+
+## 🐛 Troubleshooting
+
+### "No NVIDIA API key"
+- Get key from: https://build.nvidia.com/
+- Set in `CONFIG["api_key"]`
+
+### "No plots generated"
+- Check `surface_contour_plots/` folder exists
+- Verify dataset name matches available .mat files
+
+### "All PDEs rated POOR"
+- Increase `n_x_sub` and `n_t_sub` for better signal
+- Lower `restrict_terms` to allow more term types
+- Check if dataset is noisy
+
+### "Takes too long"
+- Reduce resolution: `n_x_sub=256, n_t_sub=128`
+- Reduce max_rounds: `max_rounds=20`
+
+---
+
+## 📝 Dependencies
 
 ```bash
-# 1. Install dependencies
-pip install autogen-agentchat pysindy scipy numpy
+pip install autogen-agentchat autogen-ext pysindy scipy numpy matplotlib pillow
+```
 
-# 2. Set API key in notebook
-api_key = "your-nvidia-api-key"
+- **AutoGen**: Multi-agent orchestration
+- **PySINDy**: Sparse regression and PDE fitting
+- **NVIDIA API**: LLM/VLM inference
 
-# 3. Run all cells sequentially
+---
 
-# 4. Monitor output for:
-#    - VLM analysis
-#    - 10 generated PDEs
-#    - Fitted coefficients + scores
-#    - TERMINATE signal (success!)
+## 🎓 Citation
+
+If you use this code, please cite:
+
+```
+@software{pde_discovery_agentic,
+  title = {Agentic AI for PDE Discovery},
+  author = {Your Name},
+  year = {2024},
+  description = {Multi-agent system for discovering PDEs using VLMs and symbolic regression}
+}
 ```
 
 ---
 
-**Last Updated**: October 2025
+
+
+## 🔗 Related Work
+
+- **PySINDy**: https://github.com/dynamicslab/pysindy
+- **AutoGen**: https://github.com/microsoft/autogen
+- **SINDy Paper**: Brunton et al. (2016) - Discovering governing equations from data
+
+---
+
 
