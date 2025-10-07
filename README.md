@@ -165,14 +165,14 @@ Traditional symbolic regression (e.g., genetic programming, LASSO) explores term
 
 3. **Iterative Learning**: Unlike static methods, the LLM:
    - Receives feedback ("error too high, add u_xxxx")
-   - Adjusts next generation of PDEs
+   - Adjusts the next generation of PDEs
    - Converges faster than blind search
 
 ### **What the LLM Does NOT Do**
-- ❌ Does NOT run simulations
-- ❌ Does NOT compute derivatives
-- ❌ Does NOT fit coefficients
-- ✅ ONLY generates symbolic PDE forms (e.g., `u_t = term1 + term2`)
+- Does NOT run simulations
+- Does NOT compute derivatives
+- Does NOT fit coefficients
+- ONLY generates symbolic PDE forms (e.g., `u_t = term1 + term2`)
 
 ---
 
