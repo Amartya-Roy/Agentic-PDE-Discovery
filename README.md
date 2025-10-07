@@ -1,3 +1,6 @@
+🔴 [CAUTION] - WORK IN PROGRESS 
+
+
 # Agentic AI System for PDE Discovery
 
 ## 🎯 Overview
