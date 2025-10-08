@@ -42,30 +42,7 @@ VLM (Vision) → LLM (Symbolic) → Engineer (Code) → Executor (Run) →
 Scientist (QC) → VLM Validator (Visual) → Critic (Decision)
 ```
 
-### Agent Roles
 
-1. **VLM (Contour_Plot_Analyser)**: Analyzes spatiotemporal plots, identifies patterns (shocks, waves, dispersion)
-
-2. **LLM (Hypothesis Generator)**: Maps visual cues to symbolic PDE terms, generates 10 candidate equations
-   - Example: "dispersion" → u_xxxx, "nonlinearity" → u*u_x
-
-3. **Engineer**: Writes Python code to fit each candidate PDE using PySINDy
-   - Creates custom PDE libraries for each hypothesis
-   - Generates 3-subplot comparison plots (ground truth vs predicted vs error)
-
-4. **Executor**: Runs the generated code, saves comparison plots
-
-5. **Scientist**: Quality control - checks if plots were generated successfully
-
-6. **VLM Validator**: Visually analyzes the 10 comparison plots
-   - Rates match quality: EXCELLENT / GOOD / ACCEPTABLE / POOR
-   - Identifies top 3 best matches
-
-7. **Critic**: Final decision maker
-   - If EXCELLENT match found → TERMINATE and save result
-   - If POOR matches → Send feedback to LLM for new hypotheses
-
----
 
 ## 📂 Key Files
 
@@ -87,27 +64,23 @@ Scientist (QC) → VLM Validator (Visual) → Critic (Decision)
 
 ## ⚙️ Configuration
 
-Edit `CONFIG` dictionary in Cell 5:
+Edit `CONFIG` dictionary in Cell 4:
 
 ```python
 CONFIG = {
-    # Resolution (higher = more accurate but slower)
-    "n_x_sub": 1024,      # Spatial points (256-1024)
-    "n_t_sub": 512,       # Temporal points (128-512)
-    
     # Search parameters
     "max_rounds": 30,     # Max iterations (20-50)
     
+    # Accuracy threshold
+    "l2_threshold": 0.01, # Acceptance threshold (lower = stricter)
+    
     # Dataset
-    "dataset_name": "KS", # "KS" or "Burgers"
+    "dataset_name": "chafee_infante", # Options: "KS", "Burgers", "Kdv", "chafee_infante", "PDE_divide"
     
-    # Term restrictions
-    "restrict_terms": True,  # Remove polynomial terms for cleaner search
-    
-    # API
+    # API Models (NVIDIA)
     "api_key": "nvapi-...",
     "llm_model": "qwen/qwen3-coder-480b-a35b-instruct",
-    "vlm_model": "microsoft/phi-4-multimodal-instruct",
+    "vlm_model": "meta/llama-3.2-90b-vision-instruct",  # Working vision model!
 }
 ```
 
